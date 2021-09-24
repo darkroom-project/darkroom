@@ -1,0 +1,33 @@
+version: '3.8'
+services:
+
+  postgres:
+    image: postgres:13.4-alpine
+    shm_size: '256m'
+    environment:
+      POSTGRES_USER: darkroom
+      POSTGRES_PASSWORD: darkroom-password
+      POSTGRES_DB: darkroom
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    # If you need to access the DB locally. Could be a security risk to expose DB.
+    ports:
+      - "5432:5432"
+    command:
+      -c checkpoint_completion_target=0.9
+      -c work_mem=96MB
+      -c wal_writer_delay=20ms
+      -c synchronous_commit=off
+      -c wal_buffers=32MB
+      -c min_wal_size=2GB
+      -c max_wal_size=4GB
+      # Optional, for SSD Data Storage. If you are using the HDD, set up this command to '2'
+      -c effective_io_concurrency=200
+      # Optional, for SSD Data Storage. If you are using the HDD, set up this command to '4'
+      -c random_page_cost=1.1
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $$POSTGRES_DB -U $$POSTGRES_USER" ]
+      interval: 10s
+      timeout: 120s
+      retries: 10
+    restart: always
